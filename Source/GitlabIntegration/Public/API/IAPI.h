@@ -56,6 +56,27 @@ struct FGitlabIntegrationIAPIIssue {
     }
 };
 
+USTRUCT()
+struct FGitlabIntegrationIAPILabel {
+    GENERATED_BODY()
+    UPROPERTY() int id;
+    UPROPERTY() FString name;
+    UPROPERTY() FString color;
+    UPROPERTY() FString text_color;
+    UPROPERTY() FString description;
+
+    FGitlabIntegrationIAPILabel() {
+        id=-1;
+    }
+    FGitlabIntegrationIAPILabel(FGitlabIntegrationIAPILabel &old) {
+        id=old.id;
+        name=old.name;
+        color=old.color;
+        text_color=old.text_color;
+        description=old.description;
+    }
+};
+
 DECLARE_LOG_CATEGORY_EXTERN(LogGitlabIntegrationIAPI, Log, All);
 
 class GITLABINTEGRATION_API IAPI {
@@ -90,6 +111,7 @@ public:
     FGitlabIntegrationIAPIProject SelectedProject;
 
     TMap<int32, TSharedPtr<FGitlabIntegrationIAPIIssue>> Issues;
+    TMap<int32, TSharedPtr<FGitlabIntegrationIAPILabel>> Labels;
 
     void SetRequestHeaders(TSharedRef<IHttpRequest>& Request);
 
@@ -104,6 +126,8 @@ public:
     void ProjectsResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful);
         //Issues
     void GetProjectIssuesRequest(int project_id, int32 page);
+    void GetProjectLabels(int project_id, int32 page);
+    void ProjectLabelsResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful);
     void RefreshIssues();
     void ProjectIssuesResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful);
     void RecordTimeSpent(TSharedPtr <FGitlabIntegrationIAPIIssue> issue, int time);

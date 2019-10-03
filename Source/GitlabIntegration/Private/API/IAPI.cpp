@@ -106,8 +106,7 @@ void IAPI::ProjectsResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, 
             if (SelectedProject.id == -1) {
                 if (Project.name_with_namespace == InitialProjectName) {
                     UE_LOG(LogGitlabIntegrationIAPI, Log, TEXT("Found selected project"))
-                    SelectedProject = Project;
-                    GetProjectIssuesRequest(Project.id, 1);
+                    SetProject(Project);
                 }
             }
         }
@@ -138,7 +137,6 @@ TArray<FGitlabIntegrationIAPIProject> IAPI::GetProjects() {
         return One.name_with_namespace.Compare(Two.name_with_namespace, ESearchCase::IgnoreCase) < 0;
     });
 
-
     return result;
 }
 
@@ -146,7 +144,15 @@ void IAPI::SetProject(FGitlabIntegrationIAPIProject project) {
     SelectedProject = project;
     UE_LOG(LogGitlabIntegrationIAPI, Log, TEXT("Project Last Activity: %s"), *project.last_activity_at.ToHttpDate());
     Issues.Empty();
+    Labels.Empty();
     GetProjectIssuesRequest(project.id, 1);
+    GetProjectLabels(project.id, 1);
+}
+
+void IAPI::GetProjectLabels(int project_id, int32 page) {
+    TSharedRef<IHttpRequest> Request = GetRequest("projects/" + FString::FromInt(project_id) + "/labels", page);
+    Request->OnProcessRequestComplete().BindRaw(this, &IAPI::ProjectLabelsResponse);
+    Send(Request);
 }
 
 void IAPI::GetProjectIssuesRequest(int project_id, int32 page) {
@@ -194,6 +200,41 @@ void IAPI::ProjectIssuesResponse(FHttpRequestPtr Request, FHttpResponsePtr Respo
     }
 }
 
+void IAPI::ProjectLabelsResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful) {
+    if (!ResponseIsValid(Response, bWasSuccessful)) return;
+
+    TArray<FGitlabIntegrationIAPILabel> LocalLabels;
+    FString JsonString = Response->GetContentAsString();
+    FJsonObjectConverter::JsonArrayStringToUStruct(JsonString, &LocalLabels, 0, 0);
+
+    for (auto &Label : LocalLabels) {
+        if (!Labels.Contains(Label.id)) {
+            TSharedPtr<FGitlabIntegrationIAPILabel> TempLabel= MakeShareable(new FGitlabIntegrationIAPILabel(Label));
+            Labels.Emplace(Label.id, TempLabel);
+        }
+    }
+
+    int current_page = FCString::Atoi(*Response->GetHeader(TEXT("X-Page")));
+    int next_page = FCString::Atoi(*Response->GetHeader(TEXT("X-Next-Page")));
+
+    UE_LOG(LogGitlabIntegrationIAPI, Log, TEXT("Current page: %d"), current_page)
+    UE_LOG(LogGitlabIntegrationIAPI, Log, TEXT("Next page: %d"), next_page)
+
+    if(GitlabIntegrationIssueCallback) {
+        GitlabIntegrationIssueCallback();
+    }
+
+    if (next_page > current_page) {
+        UE_LOG(LogGitlabIntegrationIAPI, Log, TEXT("Trying to get next page of labels"));
+        GetProjectLabels(SelectedProject.id, next_page);
+    } else {
+        UE_LOG(LogGitlabIntegrationIAPI, Log, TEXT("Got list of labels"));
+        for (auto &Label : Labels) {
+            UE_LOG(LogGitlabIntegrationIAPI, Log, TEXT(" %s"), *(Label.Value)->name);
+        }
+    }
+}
+
 void IAPI::SetIssueCallback(std::function<void()> callback) {
     GitlabIntegrationIssueCallback = callback;
 }
@@ -204,7 +245,7 @@ IAPI::IAPI(FString base, FString token, FString LoadProject, std::function<void(
     SetBaseUrl(base);
     ApiToken = token;
     InitialProjectName = LoadProject;
-    GitlabIntegrationIssueCallback = callback;
+    SetIssueCallback(callback);
     GetProjectsRequest(1);
 }
 
