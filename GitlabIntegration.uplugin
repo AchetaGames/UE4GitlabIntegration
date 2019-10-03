@@ -1,0 +1,23 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "Gitlab Integration",
+	"Description": "Provides integration with Gitlab Server",
+	"Category": "Programming",
+	"CreatedBy": "Acheta Games",
+	"CreatedByURL": "https://git.zkapal.net/acheta-games/ue4-gitlab-integration",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"CanContainContent": false,
+	"IsBetaVersion": true,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "GitlabIntegration",
+			"Type": "Editor",
+			"LoadingPhase": "Default"
+		}
+	]
+}
