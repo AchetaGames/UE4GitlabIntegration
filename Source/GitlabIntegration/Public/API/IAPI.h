@@ -84,11 +84,12 @@ public:
     IAPI();
 	virtual ~IAPI();
 
-    IAPI(FString base, FString token, FString LoadProject, std::function<void()> callback);
+    IAPI(FString base, FString token, FString LoadProject, std::function<void()> IssueCallback, std::function<void()> LabelCallback);
 	virtual void SetBaseUrl(FString base);
     void SetToken(FString token);
     void SetLoadProject(FString project);
     void SetIssueCallback(std::function<void()> callback);
+    void SetLabelCallback(std::function<void()> callback);
     void SetProject(FGitlabIntegrationIAPIProject project);
     FGitlabIntegrationIAPIProject GetProject();
 
@@ -105,7 +106,8 @@ public:
     FString ApiBaseUrl = TEXT("");
     FString ApiToken = TEXT("");
     FString InitialProjectName = TEXT("");
-    std::function<void()> GitlabIntegrationIssueCallback;
+    std::function<void()> IssueCallback;
+    std::function<void()> LabelCallback;
 
     TMap<int32, FGitlabIntegrationIAPIProject> Projects;
     FGitlabIntegrationIAPIProject SelectedProject;
@@ -135,4 +137,6 @@ public:
 
     TArray<FGitlabIntegrationIAPIProject> GetProjects();
     TArray<TSharedPtr<FGitlabIntegrationIAPIIssue>> GetIssues();
+
+    TArray<TSharedPtr<FGitlabIntegrationIAPILabel>> GetLabels();
 };

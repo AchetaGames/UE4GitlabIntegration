@@ -6,6 +6,7 @@
 #include "GitlabIntegrationStyle.h"
 #include "GitlabIntegrationCommands.h"
 #include "LevelEditor.h"
+#include "Math/Color.h"
 #include "EditorStyleSet.h"
 #include "Styling/ISlateStyle.h"
 #include "Widgets/Docking/SDockTab.h"
@@ -43,7 +44,7 @@ void FGitlabIntegrationModule::StartupModule() {
     }
 
     Api = new GitlabAPI(Settings->Server, Settings->Token, Settings->Project,
-                        std::bind(&FGitlabIntegrationModule::RefreshIssues, this));
+                        std::bind(&FGitlabIntegrationModule::RefreshIssues, this), std::bind(&FGitlabIntegrationModule::RefreshLabels, this));
 
     if (ProjectSelectionButtonText.IsValid()) {
         if (!Settings->Project.IsEmpty()) {
@@ -113,149 +114,167 @@ void FGitlabIntegrationModule::ShutdownModule() {
 
 TSharedRef <SDockTab> FGitlabIntegrationModule::OnSpawnPluginTab(const FSpawnTabArgs &SpawnTabArgs) {
     return SNew(SDockTab)
-            .TabRole(ETabRole::NomadTab)
-    [
-            SNew(SScrollBox)
-                    .Orientation(EOrientation::Orient_Vertical)
-                    .ConsumeMouseWheel(EConsumeMouseWheel::Always)
-            + SScrollBox::Slot()
-            [
-                    SNew(SVerticalBox)
-                    + SVerticalBox::Slot()
-                            .HAlign(HAlign_Fill)
-                            .AutoHeight()
-                    [
-                            SNew(SExpandableArea)
-                                    .AreaTitle(
-                                            LOCTEXT("GitlabIntegrationSettings",
-                                                    "Settings"))
-                                    .InitiallyCollapsed(true)
-                                    .Padding(8.0f)
-                                    .BodyContent()
-                            [
-                                    SNew(SHorizontalBox)
-                                    + SHorizontalBox::Slot()
-                                            .Padding(0.0f,
-                                                     3.0f,
-                                                     6.0f,
-                                                     3.0f)
-                                            .FillWidth(0.25)
-                                            .VAlign(VAlign_Center)
-                                    [
-                                            SNew(STextBlock)
-                                                    .Text(LOCTEXT("GitlabIntegrationProject",
-                                                                  "Project"))
-                                    ]
-                                    +
-                                    SHorizontalBox::Slot()
-                                    [
-                                            SNew(SSpacer)
-                                    ]
-                                    +
-                                    SHorizontalBox::Slot()
-                                            .Padding(0.0f,
-                                                     3.0f,
-                                                     6.0f,
-                                                     3.0f)
-                                            .FillWidth(0.75)
-                                            .VAlign(VAlign_Center)
-                                    [
-                                            CreateProjectSelectionButton()
-                                    ]
-                            ]
+               .TabRole(ETabRole::NomadTab)
+               [
+                       SNew(SScrollBox)
+                           .Orientation(EOrientation::Orient_Vertical)
+                           .ConsumeMouseWheel(EConsumeMouseWheel::Always)
+                           + SScrollBox::Slot()
+                           [
+                                   SNew(SVerticalBox)
+                                   + SVerticalBox::Slot()
+                                       .HAlign(HAlign_Fill)
+                                       .AutoHeight()
+                                   [
+                                           SNew(SExpandableArea)
+                                               .AreaTitle(
+                                                   LOCTEXT("GitlabIntegrationSettings",
+                                                           "Settings"))
+                                               .InitiallyCollapsed(true)
+                                               .Padding(8.0f)
+                                               .BodyContent()
+                                           [
+                                                   SNew(SHorizontalBox)
+                                                   + SHorizontalBox::Slot()
+                                                       .Padding(0.0f,
+                                                                3.0f,
+                                                                6.0f,
+                                                                3.0f)
+                                                       .FillWidth(0.25)
+                                                       .VAlign(VAlign_Center)
+                                                   [
+                                                           SNew(STextBlock)
+                                                           .Text(LOCTEXT("GitlabIntegrationProject",
+                                                                         "Project"))
+                                                   ]
+                                                   +
+                                                   SHorizontalBox::Slot()
+                                                   [
+                                                           SNew(SSpacer)
+                                                   ]
+                                                   +
+                                                   SHorizontalBox::Slot()
+                                                       .Padding(0.0f,
+                                                                3.0f,
+                                                                6.0f,
+                                                                3.0f)
+                                                       .FillWidth(0.75)
+                                                       .VAlign(VAlign_Center)
+                                                   [
+                                                       CreateProjectSelectionButton()
+                                                   ]
+                                           ]
 
-                    ]
-                    + SVerticalBox::Slot()
-                            .AutoHeight()
-                    [
-                            SNew(SExpandableArea)
-                                    .AreaTitle(LOCTEXT("GitlabIntegrationIssues",
-                                                       "Issues"))
-                                    .InitiallyCollapsed(false)
-                                    .Padding(8.0f)
-                                    .BodyContent()
-                            [
-                                    SNew(SVerticalBox)
-                                    + SVerticalBox::Slot()
-                                            .AutoHeight()
-                                    [
-                                            SNew(SHorizontalBox)
-                                            + SHorizontalBox::Slot()
-                                                    .Padding(0.0f,
-                                                             3.0f,
-                                                             6.0f,
-                                                             3.0f)
+                                   ]
+                                   + SVerticalBox::Slot()
+                                       .AutoHeight()
+                                   [
+                                           SNew(SExpandableArea)
+                                               .AreaTitle(LOCTEXT("GitlabIntegrationIssues",
+                                                                  "Issues"))
+                                               .InitiallyCollapsed(false)
+                                               .Padding(8.0f)
+                                               .BodyContent()
+                                           [
+                                                   SNew(SVerticalBox)
+                                                   + SVerticalBox::Slot()
+                                                       .AutoHeight()
+                                                   [
+                                                           SNew(SHorizontalBox)
+                                                           + SHorizontalBox::Slot()
+                                                               .Padding(0.0f,
+                                                                        3.0f,
+                                                                        6.0f,
+                                                                        3.0f)
 
-                                                    .VAlign(VAlign_Center)
-                                                    .FillWidth(1.0)
-                                            [SNew(SSearchBox).HintText(LOCTEXT("GISearchBoxHint",
-                                                                               "Search issues"))
-                                                            .OnTextChanged_Lambda(
-                                                                    [this](const FText &NewText) {
-                                                                        UE_LOG(LogGitlabIntegration, Log,
-                                                                               TEXT("Searching for %s"),
-                                                                               *NewText.ToString());
-                                                                        IssueSearch = NewText.ToString();
-                                                                        RefreshIssues();
-                                                                    })]
-                                            + SHorizontalBox::Slot()
-                                                    .Padding(0.0f,
-                                                             3.0f,
-                                                             6.0f,
-                                                             3.0f)
-                                                    .AutoWidth()
-                                                    .VAlign(VAlign_Center)
-                                            [SNew(SBox)
-                                                            .WidthOverride(
-                                                                    30.0f)
-                                                            .HeightOverride(
-                                                                    30.0f)
-                                                    [
-                                                            SNew(SButton)
-                                                                    .ButtonStyle(
-                                                                            FEditorStyle::Get(),
-                                                                            "NoBorder")
-                                                                    .HAlign(HAlign_Fill)
-                                                                    .VAlign(VAlign_Fill)
-                                                                    .OnClicked_Lambda(
-                                                                            [this]() -> FReply {
-                                                                                Api->RefreshIssues();
-                                                                                return FReply::Handled();
-                                                                            })
-                                                            [SNew(SBorder)
-                                                                    // All brushes in Source/Editor/EditorStyle/Private/SlateEditorStyle.cpp
-                                                                    .BorderImage(
-                                                                            FEditorStyle::GetBrush(
-                                                                                    "Icons.Refresh"))
-                                                                    .Padding(
-                                                                            FMargin(1.0f))
-                                                                    .HAlign(HAlign_Fill)
-                                                                    .VAlign(VAlign_Fill)]
-                                                    ]
-                                            ]
-                                    ]
-                                    + SVerticalBox::Slot()
-                                            .AutoHeight()
-                                    [
-                                            SAssignNew(IssueListView,
-                                                       SListView < TSharedPtr < FGitlabIntegrationIAPIIssue >> )
-                                                    .ListItemsSource(&IssueList)
-                                                    .SelectionMode(
-                                                            ESelectionMode::Multi)
-                                                    .OnGenerateRow_Lambda(
-                                                            [this](TSharedPtr <FGitlabIntegrationIAPIIssue> IssueInfo,
-                                                                   const TSharedRef <STableViewBase> &OwnerTable) -> TSharedRef <ITableRow> {
-                                                                return GenerateIssueWidget(
-                                                                        IssueInfo,
-                                                                        OwnerTable);
+                                                               .VAlign(VAlign_Center)
+                                                               .FillWidth(1.0)
+                                                           [SNew(SSearchBox).HintText(LOCTEXT("GISearchBoxHint",
+                                                                                              "Search issues"))
+                                                                   .OnTextChanged_Lambda(
+                                                                       [this](const FText &NewText) {
+                                                                           UE_LOG(LogGitlabIntegration, Log,
+                                                                                  TEXT("Searching for %s"),
+                                                                                  *NewText.ToString());
+                                                                           IssueSearch = NewText.ToString();
+                                                                           RefreshIssues();
+                                                                       })]
+                                                           + SHorizontalBox::Slot()
+                                                               .Padding(0.0f,
+                                                                        3.0f,
+                                                                        6.0f,
+                                                                        3.0f)
+                                                               .AutoWidth()
+                                                               .VAlign(VAlign_Center)
+                                                           [SNew(SBox)
+                                                                    .WidthOverride(
+                                                                        30.0f)
+                                                                    .HeightOverride(
+                                                                        30.0f)
+                                                                [
+                                                                        SNew(SButton)
+                                                                            .ButtonStyle(
+                                                                                FEditorStyle::Get(),
+                                                                                "NoBorder")
+                                                                            .HAlign(HAlign_Fill)
+                                                                            .VAlign(VAlign_Fill)
+                                                                            .OnClicked_Lambda(
+                                                                                [this]() -> FReply {
+                                                                                    Api->RefreshIssues();
+                                                                                    return FReply::Handled();
+                                                                                })
+                                                                        [SNew(SBorder)
+                                                                             // All brushes in Source/Editor/EditorStyle/Private/SlateEditorStyle.cpp
+                                                                                 .BorderImage(
+                                                                                     FEditorStyle::GetBrush(
+                                                                                         "Icons.Refresh"))
+                                                                                 .Padding(
+                                                                                     FMargin(1.0f))
+                                                                                 .HAlign(HAlign_Fill)
+                                                                                 .VAlign(VAlign_Fill)]
+                                                                ]
+                                                           ]
+                                                   ]
+                                                   + SVerticalBox::Slot()
+                                                       .VAlign(VAlign_Center)
+                                                   [
+                                                           SAssignNew(LabelTileView,
+                                                                      STileView<TSharedPtr<FGitlabIntegrationIAPILabel >>)
+                                                               .ListItemsSource(&LabelList)
+                                                               .SelectionMode(ESelectionMode::Multi)
+                                                               .ItemHeight(16)
+                                                               .OnGenerateTile_Lambda(
+                                                                   [this](
+                                                                       TSharedPtr<FGitlabIntegrationIAPILabel> LabelInfo,
+                                                                       const TSharedRef<STableViewBase> &OwnerTable) -> TSharedRef<ITableRow> {
+                                                                       return GenerateLabelWidget(
+                                                                           LabelInfo,
+                                                                           OwnerTable);
+                                                                   })
+                                                   ]
+                                                   + SVerticalBox::Slot()
+                                                       .AutoHeight()
+                                                   [
+                                                           SAssignNew(IssueListView,
+                                                                      SListView<TSharedPtr<FGitlabIntegrationIAPIIssue >>)
+                                                               .ListItemsSource(&IssueList)
+                                                               .SelectionMode(
+                                                                   ESelectionMode::SingleToggle)
+                                                               .OnGenerateRow_Lambda(
+                                                                   [this](
+                                                                       TSharedPtr<FGitlabIntegrationIAPIIssue> IssueInfo,
+                                                                       const TSharedRef<STableViewBase> &OwnerTable) -> TSharedRef<ITableRow> {
+                                                                       return GenerateIssueWidget(
+                                                                           IssueInfo,
+                                                                           OwnerTable);
 
-                                                            })
+                                                                   })
 
-                                    ]
-                            ]
-                    ]
-            ]
-    ];
+                                                   ]
+                                           ]
+                                   ]
+                           ]
+               ];
 }
 
 TSharedRef <ITableRow> FGitlabIntegrationModule::GenerateIssueWidget(TSharedPtr <FGitlabIntegrationIAPIIssue> IssueInfo,
@@ -371,6 +390,26 @@ TSharedRef <ITableRow> FGitlabIntegrationModule::GenerateIssueWidget(TSharedPtr 
                             .Padding(FMargin(1.0f))
                             .HAlign(HAlign_Fill)]
     ];
+}
+
+TSharedRef<ITableRow> FGitlabIntegrationModule::GenerateLabelWidget(TSharedPtr<FGitlabIntegrationIAPILabel> LabelInfo,
+                                                                    const TSharedRef<STableViewBase> &OwnerTable) {
+    return SNew(STableRow<TSharedPtr<FGitlabIntegrationIAPILabel >>, OwnerTable)
+               [
+                       SNew(SBorder)
+                           .BorderImage(FEditorStyle::GetBrush("WhiteBrush"))
+                           .BorderBackgroundColor(FColor::FromHex(LabelInfo->color))
+                           .Padding(1)
+                           .ToolTipText(FText::FromString(LabelInfo->description))
+                       [
+                               SNew(STextBlock)
+                                   .Text(FText::FromString(LabelInfo->name))
+                                   .AutoWrapText(false)
+                                   .ColorAndOpacity(FColor::FromHex(LabelInfo->text_color))
+                                   .Justification(ETextJustify::Center)
+
+                       ]
+               ];
 }
 
 void FGitlabIntegrationModule::FinishTimeTracking(TSharedPtr<FGitlabIntegrationIAPIIssue> issue) {
@@ -516,6 +555,19 @@ void FGitlabIntegrationModule::RefreshIssues() {
     if (IssueListView.IsValid()) {
         IssueListView->RequestListRefresh();
     }
+}
+
+void FGitlabIntegrationModule::RefreshLabels() {
+    UE_LOG(LogGitlabIntegration, Verbose, TEXT("Label callback triggered"));
+
+    for (auto &Label: Api->GetLabels()) {
+        LabelList.Add(Label);
+    }
+
+    if (LabelTileView.IsValid()) {
+        LabelTileView->RequestListRefresh();
+    }
+
 }
 
 #undef LOCTEXT_NAMESPACE

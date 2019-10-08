@@ -7,6 +7,7 @@
 #include "Modules/ModuleManager.h"
 #include "Widgets/Text/STextBlock.h"
 #include "Widgets/Views/SListView.h"
+#include "Widgets/Views/STileView.h"
 #include "API/GitlabAPI.h"
 #include "EditorStyleSet.h"
 
@@ -32,6 +33,7 @@ private:
 	void AddToolbarExtension(FToolBarBuilder& Builder);
 	void AddMenuExtension(FMenuBuilder& Builder);
 	void RefreshIssues();
+    void RefreshLabels();
 
 	TSharedRef<class SDockTab> OnSpawnPluginTab(const class FSpawnTabArgs& SpawnTabArgs);
 
@@ -40,6 +42,9 @@ private:
     TSharedRef<SWidget> GenerateProjectList();
 
     TSharedRef<ITableRow> GenerateIssueWidget(TSharedPtr<FGitlabIntegrationIAPIIssue> IssueInfo, const TSharedRef<STableViewBase>& OwnerTable);
+
+    TSharedRef<ITableRow> GenerateLabelWidget(TSharedPtr<FGitlabIntegrationIAPILabel> LabelInfo,
+                                              const TSharedRef<STableViewBase> &OwnerTable);
 
     IAPI* Api;
 
@@ -63,5 +68,8 @@ private:
 
     /** Holds the message type list view. */
     TSharedPtr<SListView<TSharedPtr<FGitlabIntegrationIAPIIssue>>> IssueListView;
+
+    TArray<TSharedPtr<FGitlabIntegrationIAPILabel>> LabelList;
+    TSharedPtr<STileView<TSharedPtr<FGitlabIntegrationIAPILabel>>> LabelTileView;
 
 };

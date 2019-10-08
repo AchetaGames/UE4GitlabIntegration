@@ -18,11 +18,12 @@ void GitlabAPI::SetBaseUrl(FString server) {
     UE_LOG(LogGitlabIntegrationAPI, Warning, TEXT("Changing Gitlab API BaseURL to: %s"), *ApiBaseUrl);
 }
 
-GitlabAPI::GitlabAPI(FString base, FString token, FString LoadProject, std::function<void()> callback): IAPI() {
+GitlabAPI::GitlabAPI(FString base, FString token, FString LoadProject, std::function<void()> IssueCallback, std::function<void()> LabelCallback): IAPI() {
     UE_LOG(LogGitlabIntegrationAPI, Log, TEXT("Creating Gitlab API"));
     SetBaseUrl(base);
     ApiToken = token;
     InitialProjectName = LoadProject;
-    GitlabIntegrationIssueCallback = callback;
+    SetIssueCallback(IssueCallback);
+    SetLabelCallback(LabelCallback);
     GetProjectsRequest(1);
 }

@@ -22,7 +22,9 @@ class GITLABINTEGRATION_API GitlabAPI: public IAPI {
 public:
 	GitlabAPI();
 	~GitlabAPI();
-    GitlabAPI(FString base, FString token, FString LoadProject, std::function<void()> callback);
+
+    GitlabAPI(FString base, FString token, FString LoadProject, std::function<void()> IssueCallback,
+              std::function<void()> LabelCallback);
 
     void SetBaseUrl(FString server);
 };

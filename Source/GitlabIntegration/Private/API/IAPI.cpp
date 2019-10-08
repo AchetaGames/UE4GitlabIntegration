@@ -185,8 +185,8 @@ void IAPI::ProjectIssuesResponse(FHttpRequestPtr Request, FHttpResponsePtr Respo
     UE_LOG(LogGitlabIntegrationIAPI, Log, TEXT("Current page: %d"), current_page)
     UE_LOG(LogGitlabIntegrationIAPI, Log, TEXT("Next page: %d"), next_page)
 
-    if(GitlabIntegrationIssueCallback) {
-        GitlabIntegrationIssueCallback();
+    if(IssueCallback) {
+        IssueCallback();
     }
 
     if (next_page > current_page) {
@@ -220,8 +220,8 @@ void IAPI::ProjectLabelsResponse(FHttpRequestPtr Request, FHttpResponsePtr Respo
     UE_LOG(LogGitlabIntegrationIAPI, Log, TEXT("Current page: %d"), current_page)
     UE_LOG(LogGitlabIntegrationIAPI, Log, TEXT("Next page: %d"), next_page)
 
-    if(GitlabIntegrationIssueCallback) {
-        GitlabIntegrationIssueCallback();
+    if(LabelCallback) {
+        LabelCallback();
     }
 
     if (next_page > current_page) {
@@ -236,22 +236,32 @@ void IAPI::ProjectLabelsResponse(FHttpRequestPtr Request, FHttpResponsePtr Respo
 }
 
 void IAPI::SetIssueCallback(std::function<void()> callback) {
-    GitlabIntegrationIssueCallback = callback;
+    IssueCallback = callback;
 }
 
-IAPI::IAPI(FString base, FString token, FString LoadProject, std::function<void()> callback) {
+void IAPI::SetLabelCallback(std::function<void()> callback) {
+    LabelCallback = callback;
+}
+
+IAPI::IAPI(FString base, FString token, FString LoadProject, std::function<void()> IssueCallback, std::function<void()> LabelCallback) {
     UE_LOG(LogGitlabIntegrationIAPI, Log, TEXT("Creating Gitlab API"));
     Http = &FHttpModule::Get();
     SetBaseUrl(base);
     ApiToken = token;
     InitialProjectName = LoadProject;
-    SetIssueCallback(callback);
+    SetIssueCallback(IssueCallback);
     GetProjectsRequest(1);
 }
 
 TArray<TSharedPtr<FGitlabIntegrationIAPIIssue>> IAPI::GetIssues() {
     TArray<TSharedPtr<FGitlabIntegrationIAPIIssue>> result;
     Issues.GenerateValueArray(result);
+    return result;
+}
+
+TArray<TSharedPtr<FGitlabIntegrationIAPILabel>> IAPI::GetLabels() {
+    TArray<TSharedPtr<FGitlabIntegrationIAPILabel>> result;
+    Labels.GenerateValueArray(result);
     return result;
 }
 
