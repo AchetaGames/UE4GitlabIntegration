@@ -7,7 +7,7 @@
 #include "Modules/ModuleManager.h"
 #include "Widgets/Text/STextBlock.h"
 #include "Widgets/Views/SListView.h"
-#include "Widgets/Views/STileView.h"
+#include "Widgets/Layout/SWrapBox.h"
 #include "API/GitlabAPI.h"
 #include "EditorStyleSet.h"
 
@@ -43,8 +43,7 @@ private:
 
     TSharedRef<ITableRow> GenerateIssueWidget(TSharedPtr<FGitlabIntegrationIAPIIssue> IssueInfo, const TSharedRef<STableViewBase>& OwnerTable);
 
-    TSharedRef<ITableRow> GenerateLabelWidget(TSharedPtr<FGitlabIntegrationIAPILabel> LabelInfo,
-                                              const TSharedRef<STableViewBase> &OwnerTable);
+    TSharedRef<SHorizontalBox> GenerateLabelWidget(TSharedPtr<FGitlabIntegrationIAPILabel> LabelInfo);
 
     IAPI* Api;
 
@@ -70,6 +69,7 @@ private:
     TSharedPtr<SListView<TSharedPtr<FGitlabIntegrationIAPIIssue>>> IssueListView;
 
     TArray<TSharedPtr<FGitlabIntegrationIAPILabel>> LabelList;
-    TSharedPtr<STileView<TSharedPtr<FGitlabIntegrationIAPILabel>>> LabelTileView;
+    TSharedPtr<SWrapBox> LabelWrapBox;
+    TArray<TSharedRef<SWrapBox::FSlot>> LabelWrapSlots;
 
 };

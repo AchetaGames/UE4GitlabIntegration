@@ -145,6 +145,7 @@ void IAPI::SetProject(FGitlabIntegrationIAPIProject project) {
     UE_LOG(LogGitlabIntegrationIAPI, Log, TEXT("Project Last Activity: %s"), *project.last_activity_at.ToHttpDate());
     Issues.Empty();
     Labels.Empty();
+    StringLabels.Empty();
     GetProjectIssuesRequest(project.id, 1);
     GetProjectLabels(project.id, 1);
 }
@@ -211,6 +212,7 @@ void IAPI::ProjectLabelsResponse(FHttpRequestPtr Request, FHttpResponsePtr Respo
         if (!Labels.Contains(Label.id)) {
             TSharedPtr<FGitlabIntegrationIAPILabel> TempLabel= MakeShareable(new FGitlabIntegrationIAPILabel(Label));
             Labels.Emplace(Label.id, TempLabel);
+            StringLabels.Emplace(Label.name, TempLabel);
         }
     }
 
@@ -275,6 +277,10 @@ void IAPI::RecordTimeSpent(TSharedPtr <FGitlabIntegrationIAPIIssue> issue, int t
         TEXT(""));
     Request->OnProcessRequestComplete().BindRaw(this, &IAPI::ProjectsResponse);
     Send(Request);
+}
+
+TSharedPtr<FGitlabIntegrationIAPILabel> IAPI::GetLabel(FString &name) {
+    return *(StringLabels.Find(name));
 }
 
 void IAPI::TimeSpentResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful) {

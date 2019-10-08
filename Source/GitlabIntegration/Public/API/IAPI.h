@@ -114,6 +114,7 @@ public:
 
     TMap<int32, TSharedPtr<FGitlabIntegrationIAPIIssue>> Issues;
     TMap<int32, TSharedPtr<FGitlabIntegrationIAPILabel>> Labels;
+    TMap<FString, TSharedPtr<FGitlabIntegrationIAPILabel>> StringLabels;
 
     void SetRequestHeaders(TSharedRef<IHttpRequest>& Request);
 
@@ -139,4 +140,5 @@ public:
     TArray<TSharedPtr<FGitlabIntegrationIAPIIssue>> GetIssues();
 
     TArray<TSharedPtr<FGitlabIntegrationIAPILabel>> GetLabels();
+    TSharedPtr<FGitlabIntegrationIAPILabel> GetLabel(FString &name);
 };

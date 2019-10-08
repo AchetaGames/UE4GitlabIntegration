@@ -44,7 +44,8 @@ void FGitlabIntegrationModule::StartupModule() {
     }
 
     Api = new GitlabAPI(Settings->Server, Settings->Token, Settings->Project,
-                        std::bind(&FGitlabIntegrationModule::RefreshIssues, this), std::bind(&FGitlabIntegrationModule::RefreshLabels, this));
+                        std::bind(&FGitlabIntegrationModule::RefreshIssues, this),
+                        std::bind(&FGitlabIntegrationModule::RefreshLabels, this));
 
     if (ProjectSelectionButtonText.IsValid()) {
         if (!Settings->Project.IsEmpty()) {
@@ -112,308 +113,337 @@ void FGitlabIntegrationModule::ShutdownModule() {
     FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(GitlabIntegrationTabName);
 }
 
-TSharedRef <SDockTab> FGitlabIntegrationModule::OnSpawnPluginTab(const FSpawnTabArgs &SpawnTabArgs) {
+TSharedRef<SDockTab> FGitlabIntegrationModule::OnSpawnPluginTab(const FSpawnTabArgs &SpawnTabArgs) {
     return SNew(SDockTab)
-               .TabRole(ETabRole::NomadTab)
-               [
-                       SNew(SScrollBox)
-                           .Orientation(EOrientation::Orient_Vertical)
-                           .ConsumeMouseWheel(EConsumeMouseWheel::Always)
-                           + SScrollBox::Slot()
-                           [
+                   .TabRole(ETabRole::NomadTab)
+                   [
+                                   SNew(SScrollBox)
+                                           .Orientation(EOrientation::Orient_Vertical)
+                                           .ConsumeMouseWheel(EConsumeMouseWheel::Always)
+                                           + SScrollBox::Slot()
+                                           [
+                                                           SNew(SVerticalBox)
+                                                           + SVerticalBox::Slot()
+                                                                   .HAlign(HAlign_Fill)
+                                                                   .AutoHeight()
+                                                           [
+                                                                           SNew(SExpandableArea)
+                                                                                   .AreaTitle(
+                                                                                           LOCTEXT("GitlabIntegrationSettings",
+                                                                                                   "Settings"))
+                                                                                   .InitiallyCollapsed(true)
+                                                                                   .Padding(8.0f)
+                                                                                   .BodyContent()
+                                                                           [
+                                                                                           SNew(SHorizontalBox)
+                                                                                           + SHorizontalBox::Slot()
+                                                                                                   .Padding(0.0f,
+                                                                                                            3.0f,
+                                                                                                            6.0f,
+                                                                                                            3.0f)
+                                                                                                   .FillWidth(0.25)
+                                                                                                   .VAlign(VAlign_Center)
+                                                                                           [
+                                                                                                           SNew(STextBlock)
+                                                                                                           .Text(LOCTEXT("GitlabIntegrationProject",
+                                                                                                                         "Project"))
+                                                                                           ]
+                                                                                           +
+                                                                                           SHorizontalBox::Slot()
+                                                                                           [
+                                                                                                           SNew(SSpacer)
+                                                                                           ]
+                                                                                           +
+                                                                                           SHorizontalBox::Slot()
+                                                                                                   .Padding(0.0f,
+                                                                                                            3.0f,
+                                                                                                            6.0f,
+                                                                                                            3.0f)
+                                                                                                   .FillWidth(0.75)
+                                                                                                   .VAlign(VAlign_Center)
+                                                                                           [
+                                                                                                   CreateProjectSelectionButton()
+                                                                                           ]
+                                                                           ]
+
+                                                           ]
+                                                           + SVerticalBox::Slot()
+                                                                   .AutoHeight()
+                                                           [
+                                                                           SNew(SExpandableArea)
+                                                                                   .AreaTitle(
+                                                                                           LOCTEXT("GitlabIntegrationIssues",
+                                                                                                   "Issues"))
+                                                                                   .InitiallyCollapsed(false)
+                                                                                   .Padding(8.0f)
+                                                                                   .BodyContent()
+                                                                           [
+                                                                                           SNew(SVerticalBox)
+                                                                                           + SVerticalBox::Slot()
+                                                                                                   .AutoHeight()
+                                                                                           [
+                                                                                                           SNew(SHorizontalBox)
+                                                                                                           +
+                                                                                                           SHorizontalBox::Slot()
+                                                                                                                   .Padding(
+                                                                                                                           0.0f,
+                                                                                                                           3.0f,
+                                                                                                                           6.0f,
+                                                                                                                           3.0f)
+
+                                                                                                                   .VAlign(VAlign_Center)
+                                                                                                                   .FillWidth(
+                                                                                                                           1.0)
+                                                                                                           [SNew(SSearchBox).HintText(
+                                                                                                                           LOCTEXT("GISearchBoxHint",
+                                                                                                                                   "Search issues"))
+                                                                                                                   .OnTextChanged_Lambda(
+                                                                                                                           [this](const FText &NewText) {
+                                                                                                                               UE_LOG(LogGitlabIntegration,
+                                                                                                                                      Log,
+                                                                                                                                      TEXT("Searching for %s"),
+                                                                                                                                      *NewText.ToString());
+                                                                                                                               IssueSearch = NewText.ToString();
+                                                                                                                               RefreshIssues();
+                                                                                                                           })]
+                                                                                                           +
+                                                                                                           SHorizontalBox::Slot()
+                                                                                                                   .Padding(
+                                                                                                                           0.0f,
+                                                                                                                           3.0f,
+                                                                                                                           6.0f,
+                                                                                                                           3.0f)
+                                                                                                                   .AutoWidth()
+                                                                                                                   .VAlign(VAlign_Center)
+                                                                                                           [SNew(SBox)
+                                                                                                                            .WidthOverride(
+                                                                                                                                    30.0f)
+                                                                                                                            .HeightOverride(
+                                                                                                                                    30.0f)
+                                                                                                                    [
+                                                                                                                                    SNew(SButton)
+                                                                                                                                            .ButtonStyle(
+                                                                                                                                                    FEditorStyle::Get(),
+                                                                                                                                                    "NoBorder")
+                                                                                                                                            .HAlign(HAlign_Fill)
+                                                                                                                                            .VAlign(VAlign_Fill)
+                                                                                                                                            .OnClicked_Lambda(
+                                                                                                                                                    [this]() -> FReply {
+                                                                                                                                                        Api->RefreshIssues();
+                                                                                                                                                        return FReply::Handled();
+                                                                                                                                                    })
+                                                                                                                                    [SNew(SBorder)
+                                                                                                                                             // All brushes in Source/Editor/EditorStyle/Private/SlateEditorStyle.cpp
+                                                                                                                                                     .BorderImage(
+                                                                                                                                                             FEditorStyle::GetBrush(
+                                                                                                                                                                     "Icons.Refresh"))
+                                                                                                                                                     .Padding(
+                                                                                                                                                             FMargin(1.0f))
+                                                                                                                                                     .HAlign(HAlign_Fill)
+                                                                                                                                                     .VAlign(VAlign_Fill)]
+                                                                                                                    ]
+                                                                                                           ]
+                                                                                           ]
+                                                                                           + SVerticalBox::Slot()
+                                                                                             .VAlign(VAlign_Center)
+                                                                                           [
+                                                                                                SAssignNew(LabelWrapBox,SWrapBox).UseAllottedWidth(true)
+                                                                                           ]
+                                                                                           + SVerticalBox::Slot()
+                                                                                                   .AutoHeight()
+                                                                                           [
+                                                                                                           SAssignNew(
+                                                                                                                   IssueListView,
+                                                                                                                   SListView<TSharedPtr<FGitlabIntegrationIAPIIssue >>)
+                                                                                                                   .ListItemsSource(
+                                                                                                                           &IssueList)
+                                                                                                                   .SelectionMode(
+                                                                                                                           ESelectionMode::SingleToggle)
+                                                                                                                   .OnGenerateRow_Lambda(
+                                                                                                                           [this](
+                                                                                                                                   TSharedPtr<FGitlabIntegrationIAPIIssue> IssueInfo,
+                                                                                                                                   const TSharedRef<STableViewBase> &OwnerTable) -> TSharedRef<ITableRow> {
+                                                                                                                               RefreshLabels(); //FIXME: Dirty hack to load labels on start should be in the above slot
+                                                                                                                               return GenerateIssueWidget(
+                                                                                                                                       IssueInfo,
+                                                                                                                                       OwnerTable);
+
+                                                                                                                           })
+
+                                                                                           ]
+                                                                           ]
+                                                           ]
+                                           ]
+                   ];
+}
+
+TSharedRef<ITableRow> FGitlabIntegrationModule::GenerateIssueWidget(TSharedPtr<FGitlabIntegrationIAPIIssue> IssueInfo,
+                                                                    const TSharedRef<STableViewBase> &OwnerTable) {
+    FString separator = TEXT(", ");
+
+    TSharedRef<SWrapBox> IssueLabels = SNew(SWrapBox).UseAllottedWidth(true);
+    for (auto &label: IssueInfo->labels) {
+        IssueLabels->AddSlot() [
+                GenerateLabelWidget(Api->GetLabel(label))
+                ];
+    }
+    TSharedPtr<SBorder> TimeBorder = SNew(SBorder)
+                                             // All brushes in Source/Editor/EditorStyle/Private/SlateEditorStyle.cpp
+                                                     .BorderImage(
+                                                             FEditorStyle::GetBrush(
+                                                                     TimeTrackingMap.Contains(IssueInfo)
+                                                                     ? "PlayWorld.StopPlaySession"
+                                                                     : "PlayWorld.PlayInViewport"))
+                                                     .Padding(
+                                                             FMargin(1.0f))
+                                                     .HAlign(HAlign_Fill)
+                                                     .VAlign(VAlign_Fill);
+//    TimeTrackingBorderMap
+    return SNew(STableRow<TSharedPtr<FGitlabIntegrationIAPIIssue >>, OwnerTable)
+                   [
                                    SNew(SVerticalBox)
                                    + SVerticalBox::Slot()
-                                       .HAlign(HAlign_Fill)
-                                       .AutoHeight()
+                                           .AutoHeight()
                                    [
-                                           SNew(SExpandableArea)
-                                               .AreaTitle(
-                                                   LOCTEXT("GitlabIntegrationSettings",
-                                                           "Settings"))
-                                               .InitiallyCollapsed(true)
-                                               .Padding(8.0f)
-                                               .BodyContent()
-                                           [
-                                                   SNew(SHorizontalBox)
-                                                   + SHorizontalBox::Slot()
-                                                       .Padding(0.0f,
-                                                                3.0f,
-                                                                6.0f,
-                                                                3.0f)
-                                                       .FillWidth(0.25)
-                                                       .VAlign(VAlign_Center)
-                                                   [
-                                                           SNew(STextBlock)
-                                                           .Text(LOCTEXT("GitlabIntegrationProject",
-                                                                         "Project"))
-                                                   ]
-                                                   +
-                                                   SHorizontalBox::Slot()
-                                                   [
-                                                           SNew(SSpacer)
-                                                   ]
-                                                   +
-                                                   SHorizontalBox::Slot()
-                                                       .Padding(0.0f,
-                                                                3.0f,
-                                                                6.0f,
-                                                                3.0f)
-                                                       .FillWidth(0.75)
-                                                       .VAlign(VAlign_Center)
-                                                   [
-                                                       CreateProjectSelectionButton()
-                                                   ]
-                                           ]
-
+                                                   SNew(SGridPanel)
+                                                           .FillRow(0, 0.9f)
+                                                           .FillColumn(1, 0.7f)
+                                                           + SGridPanel::Slot(0, 0)
+                                                                   .Padding(0.0f, 4.0f, 5.0f, 4.0f)
+                                                                   .ColumnSpan(1)
+                                                                   .RowSpan(1)
+                                                           [
+                                                                           SNew(SHyperlink)
+                                                                                   .Text(FText::FromString(TEXT("#") +
+                                                                                                           FString::FromInt(
+                                                                                                                   IssueInfo->id)))
+                                                                                   .OnNavigate_Lambda([IssueInfo]() {
+                                                                                       FPlatformProcess::LaunchURL(
+                                                                                               *IssueInfo->web_url,
+                                                                                               nullptr, nullptr);
+                                                                                   })
+                                                           ]
+                                                           + SGridPanel::Slot(1, 0)
+                                                                   .Padding(0.0f, 4.0f, 4.0f, 4.0f)
+                                                                   .ColumnSpan(1)
+                                                                   .RowSpan(1)
+                                                           [
+                                                                           SNew(STextBlock)
+                                                                           .Text(FText::FromString(IssueInfo->title))
+                                                           ]
+                                                           + SGridPanel::Slot(0, 1)
+                                                                   .Padding(0.0f, 4.0f, 4.0f, 4.0f)
+                                                                   .ColumnSpan(1)
+                                                                   .RowSpan(1)
+                                                           [
+                                                                           SNew(STextBlock)
+                                                                                   .Text(FText::FromString(
+                                                                                           IssueInfo->state))
+                                                                                   .ColorAndOpacity(
+                                                                                           IssueInfo->state.Equals(
+                                                                                                   TEXT("opened"),
+                                                                                                   ESearchCase::IgnoreCase)
+                                                                                           ? FLinearColor(
+                                                                                                   FColor(0xff57a64a))
+                                                                                           : FLinearColor(
+                                                                                                   FColor(0xffcfcfcf)))
+                                                           ]
+                                                           + SGridPanel::Slot(1, 1)
+                                                                   .Padding(0.0f, 4.0f, 4.0f,
+                                                                            4.0f)
+                                                                   .ColumnSpan(1)
+                                                                   .RowSpan(
+                                                                           1)
+                                                           [
+                                                                   IssueLabels
+                                                           ]
+                                                           + SGridPanel::Slot(2, 0)
+                                                                   .Padding(
+                                                                           0.0f,
+                                                                           4.0f,
+                                                                           4.0f,
+                                                                           4.0f)
+                                                                   .ColumnSpan(
+                                                                           1)
+                                                                   .RowSpan(
+                                                                           2)
+                                                           [
+                                                                           SNew(SBox)
+                                                                                   .WidthOverride(
+                                                                                           40.0f)
+                                                                                   .HeightOverride(
+                                                                                           40.0f)
+                                                                           [
+                                                                                           SNew(SButton)
+                                                                                                   .ButtonStyle(
+                                                                                                           FEditorStyle::Get(),
+                                                                                                           "NoBorder")
+                                                                                                   .HAlign(HAlign_Fill)
+                                                                                                   .VAlign(VAlign_Fill)
+                                                                                                   .OnClicked_Lambda(
+                                                                                                           [this, IssueInfo, OwnerTable]() -> FReply {
+                                                                                                               if (TimeTrackingMap.Contains(
+                                                                                                                       IssueInfo)) {
+                                                                                                                   FinishTimeTracking(
+                                                                                                                           IssueInfo);
+                                                                                                               } else {
+                                                                                                                   TArray<TSharedPtr<FGitlabIntegrationIAPIIssue>> Keys;
+                                                                                                                   TimeTrackingMap.GenerateKeyArray(
+                                                                                                                           Keys);
+                                                                                                                   for (auto &Issue : Keys) {
+                                                                                                                       FinishTimeTracking(
+                                                                                                                               Issue);
+                                                                                                                   }
+                                                                                                                   TimeTrackingMap.Add(
+                                                                                                                           IssueInfo,
+                                                                                                                           FDateTime::UtcNow());
+                                                                                                               }
+                                                                                                               OwnerTable->RebuildList();
+                                                                                                               return FReply::Handled();
+                                                                                                           })
+                                                                                           [TimeBorder.ToSharedRef()]
+                                                                           ]
+                                                           ]
                                    ]
                                    + SVerticalBox::Slot()
-                                       .AutoHeight()
+                                           .AutoHeight()
+                                   [SNew(SBorder)
+                                                    .BorderImage(FEditorStyle::GetBrush("WhiteBrush"))
+                                                    .Padding(FMargin(1.0f))
+                                                    .HAlign(HAlign_Fill)]
+                   ];
+}
+
+TSharedRef<SHorizontalBox>
+FGitlabIntegrationModule::GenerateLabelWidget(TSharedPtr<FGitlabIntegrationIAPILabel> LabelInfo) {
+    return SNew(SHorizontalBox)
+                   + SHorizontalBox::Slot()
+                           .AutoWidth()
+                   [
+                                   SNew(SBorder)
+                                           .BorderImage(FEditorStyle::GetBrush("None"))
+                                           .Padding(1)
                                    [
-                                           SNew(SExpandableArea)
-                                               .AreaTitle(LOCTEXT("GitlabIntegrationIssues",
-                                                                  "Issues"))
-                                               .InitiallyCollapsed(false)
-                                               .Padding(8.0f)
-                                               .BodyContent()
-                                           [
-                                                   SNew(SVerticalBox)
-                                                   + SVerticalBox::Slot()
-                                                       .AutoHeight()
+                                                   SNew(SBorder)
+                                                           .BorderImage(FEditorStyle::GetBrush("WhiteBrush"))
+                                                           .BorderBackgroundColor(FColor::FromHex(LabelInfo->color))
+                                                           .Padding(FMargin(3.0f, 1.0f, 3.0f, 1.0f))
+                                                           .ToolTipText(FText::FromString(LabelInfo->description))
                                                    [
-                                                           SNew(SHorizontalBox)
-                                                           + SHorizontalBox::Slot()
-                                                               .Padding(0.0f,
-                                                                        3.0f,
-                                                                        6.0f,
-                                                                        3.0f)
-
-                                                               .VAlign(VAlign_Center)
-                                                               .FillWidth(1.0)
-                                                           [SNew(SSearchBox).HintText(LOCTEXT("GISearchBoxHint",
-                                                                                              "Search issues"))
-                                                                   .OnTextChanged_Lambda(
-                                                                       [this](const FText &NewText) {
-                                                                           UE_LOG(LogGitlabIntegration, Log,
-                                                                                  TEXT("Searching for %s"),
-                                                                                  *NewText.ToString());
-                                                                           IssueSearch = NewText.ToString();
-                                                                           RefreshIssues();
-                                                                       })]
-                                                           + SHorizontalBox::Slot()
-                                                               .Padding(0.0f,
-                                                                        3.0f,
-                                                                        6.0f,
-                                                                        3.0f)
-                                                               .AutoWidth()
-                                                               .VAlign(VAlign_Center)
-                                                           [SNew(SBox)
-                                                                    .WidthOverride(
-                                                                        30.0f)
-                                                                    .HeightOverride(
-                                                                        30.0f)
-                                                                [
-                                                                        SNew(SButton)
-                                                                            .ButtonStyle(
-                                                                                FEditorStyle::Get(),
-                                                                                "NoBorder")
-                                                                            .HAlign(HAlign_Fill)
-                                                                            .VAlign(VAlign_Fill)
-                                                                            .OnClicked_Lambda(
-                                                                                [this]() -> FReply {
-                                                                                    Api->RefreshIssues();
-                                                                                    return FReply::Handled();
-                                                                                })
-                                                                        [SNew(SBorder)
-                                                                             // All brushes in Source/Editor/EditorStyle/Private/SlateEditorStyle.cpp
-                                                                                 .BorderImage(
-                                                                                     FEditorStyle::GetBrush(
-                                                                                         "Icons.Refresh"))
-                                                                                 .Padding(
-                                                                                     FMargin(1.0f))
-                                                                                 .HAlign(HAlign_Fill)
-                                                                                 .VAlign(VAlign_Fill)]
-                                                                ]
-                                                           ]
-                                                   ]
-                                                   + SVerticalBox::Slot()
-                                                       .VAlign(VAlign_Center)
-                                                   [
-                                                           SAssignNew(LabelTileView,
-                                                                      STileView<TSharedPtr<FGitlabIntegrationIAPILabel >>)
-                                                               .ListItemsSource(&LabelList)
-                                                               .SelectionMode(ESelectionMode::Multi)
-                                                               .ItemHeight(16)
-                                                               .OnGenerateTile_Lambda(
-                                                                   [this](
-                                                                       TSharedPtr<FGitlabIntegrationIAPILabel> LabelInfo,
-                                                                       const TSharedRef<STableViewBase> &OwnerTable) -> TSharedRef<ITableRow> {
-                                                                       return GenerateLabelWidget(
-                                                                           LabelInfo,
-                                                                           OwnerTable);
-                                                                   })
-                                                   ]
-                                                   + SVerticalBox::Slot()
-                                                       .AutoHeight()
-                                                   [
-                                                           SAssignNew(IssueListView,
-                                                                      SListView<TSharedPtr<FGitlabIntegrationIAPIIssue >>)
-                                                               .ListItemsSource(&IssueList)
-                                                               .SelectionMode(
-                                                                   ESelectionMode::SingleToggle)
-                                                               .OnGenerateRow_Lambda(
-                                                                   [this](
-                                                                       TSharedPtr<FGitlabIntegrationIAPIIssue> IssueInfo,
-                                                                       const TSharedRef<STableViewBase> &OwnerTable) -> TSharedRef<ITableRow> {
-                                                                       return GenerateIssueWidget(
-                                                                           IssueInfo,
-                                                                           OwnerTable);
-
-                                                                   })
+                                                                   SNew(STextBlock)
+                                                                           .Text(FText::FromString(LabelInfo->name))
+                                                                           .AutoWrapText(false)
+                                                                           .ColorAndOpacity(FColor::FromHex(
+                                                                                   LabelInfo->text_color))
+                                                                           .Justification(ETextJustify::Center)
 
                                                    ]
-                                           ]
                                    ]
-                           ]
-               ];
-}
-
-TSharedRef <ITableRow> FGitlabIntegrationModule::GenerateIssueWidget(TSharedPtr <FGitlabIntegrationIAPIIssue> IssueInfo,
-                                                                     const TSharedRef <STableViewBase> &OwnerTable) {
-    FString separator = TEXT(", ");
-    FString::Join(IssueInfo->labels, *separator);
-    TSharedPtr<SBorder> TimeBorder= SNew(SBorder)
-            // All brushes in Source/Editor/EditorStyle/Private/SlateEditorStyle.cpp
-            .BorderImage(
-                    FEditorStyle::GetBrush(
-                            TimeTrackingMap.Contains(IssueInfo)
-                            ? "PlayWorld.StopPlaySession" : "PlayWorld.PlayInViewport"))
-            .Padding(
-                    FMargin(1.0f))
-            .HAlign(HAlign_Fill)
-            .VAlign(VAlign_Fill);
-//    TimeTrackingBorderMap
-    return SNew(STableRow < TSharedPtr < FGitlabIntegrationIAPIIssue >> , OwnerTable)
-    [
-            SNew(SVerticalBox)
-            + SVerticalBox::Slot()
-                    .AutoHeight()
-            [
-                    SNew(SGridPanel)
-                            .FillRow(0, 0.9f)
-                            .FillColumn(1, 0.7f)
-                    + SGridPanel::Slot(0, 0)
-                            .Padding(0.0f, 4.0f, 5.0f, 4.0f)
-                            .ColumnSpan(1)
-                            .RowSpan(1)
-                    [
-                            SNew(SHyperlink)
-                                    .Text(FText::FromString(TEXT("#") + FString::FromInt(IssueInfo->id)))
-                                    .OnNavigate_Lambda([IssueInfo]() {
-                                        FPlatformProcess::LaunchURL(*IssueInfo->web_url, nullptr, nullptr);
-                                    })
-                    ]
-                    + SGridPanel::Slot(1, 0)
-                            .Padding(0.0f, 4.0f, 4.0f, 4.0f)
-                            .ColumnSpan(1)
-                            .RowSpan(1)
-                    [
-                            SNew(STextBlock)
-                                    .Text(FText::FromString(IssueInfo->title))
-                    ]
-                    + SGridPanel::Slot(0, 1)
-                            .Padding(0.0f, 4.0f, 4.0f, 4.0f)
-                            .ColumnSpan(1)
-                            .RowSpan(1)
-                    [
-                            SNew(STextBlock)
-                                    .Text(FText::FromString(IssueInfo->state))
-                                    .ColorAndOpacity(IssueInfo->state.Equals(TEXT("opened"), ESearchCase::IgnoreCase)
-                                                     ? FLinearColor(FColor(0xff57a64a)) : FLinearColor(
-                                                    FColor(0xffcfcfcf)))
-                    ]
-                    + SGridPanel::Slot(1, 1)
-                            .Padding(0.0f, 4.0f, 4.0f,
-                                     4.0f)
-                            .ColumnSpan(1)
-                            .RowSpan(
-                                    1)
-                    [
-                            SNew(STextBlock)
-                                    .Text(FText::FromString(
-                                            FString::Join(
-                                                    IssueInfo->labels,
-                                                    *separator)))
-                    ]
-                    + SGridPanel::Slot(2, 0)
-                            .Padding(
-                                    0.0f,
-                                    4.0f,
-                                    4.0f,
-                                    4.0f)
-                            .ColumnSpan(
-                                    1)
-                            .RowSpan(
-                                    2)
-                    [
-                            SNew(SBox)
-                                    .WidthOverride(
-                                            40.0f)
-                                    .HeightOverride(
-                                            40.0f)
-                            [
-                                    SNew(SButton)
-                                            .ButtonStyle(FEditorStyle::Get(), "NoBorder")
-                                            .HAlign(HAlign_Fill)
-                                            .VAlign(VAlign_Fill)
-                                            .OnClicked_Lambda([this, IssueInfo, OwnerTable]() -> FReply {
-                                                if (TimeTrackingMap.Contains(IssueInfo)) {
-                                                    FinishTimeTracking(IssueInfo);
-                                                } else {
-                                                    TArray<TSharedPtr<FGitlabIntegrationIAPIIssue>> Keys;
-                                                    TimeTrackingMap.GenerateKeyArray(Keys);
-                                                    for (auto &Issue : Keys) {
-                                                        FinishTimeTracking(Issue);
-                                                    }
-                                                    TimeTrackingMap.Add(IssueInfo, FDateTime::UtcNow());
-                                                }
-                                                OwnerTable->RebuildList();
-                                                return FReply::Handled();
-                                            })
-                                    [TimeBorder.ToSharedRef()]
-                            ]
-                    ]
-            ]
-            + SVerticalBox::Slot()
-                    .AutoHeight()
-            [SNew(SBorder)
-                            .BorderImage(FEditorStyle::GetBrush("WhiteBrush"))
-                            .Padding(FMargin(1.0f))
-                            .HAlign(HAlign_Fill)]
-    ];
-}
-
-TSharedRef<ITableRow> FGitlabIntegrationModule::GenerateLabelWidget(TSharedPtr<FGitlabIntegrationIAPILabel> LabelInfo,
-                                                                    const TSharedRef<STableViewBase> &OwnerTable) {
-    return SNew(STableRow<TSharedPtr<FGitlabIntegrationIAPILabel >>, OwnerTable)
-               [
-                       SNew(SBorder)
-                           .BorderImage(FEditorStyle::GetBrush("WhiteBrush"))
-                           .BorderBackgroundColor(FColor::FromHex(LabelInfo->color))
-                           .Padding(1)
-                           .ToolTipText(FText::FromString(LabelInfo->description))
-                       [
-                               SNew(STextBlock)
-                                   .Text(FText::FromString(LabelInfo->name))
-                                   .AutoWrapText(false)
-                                   .ColorAndOpacity(FColor::FromHex(LabelInfo->text_color))
-                                   .Justification(ETextJustify::Center)
-
-                       ]
-               ];
+                   ];
 }
 
 void FGitlabIntegrationModule::FinishTimeTracking(TSharedPtr<FGitlabIntegrationIAPIIssue> issue) {
-    FTimespan TimeSpent = FDateTime::UtcNow()-TimeTrackingMap[issue];
+    FTimespan TimeSpent = FDateTime::UtcNow() - TimeTrackingMap[issue];
     Api->RecordTimeSpent(issue, FMath::RoundToInt(TimeSpent.GetTotalSeconds()));
     TimeTrackingMap.Remove(issue);
 }
@@ -560,12 +590,21 @@ void FGitlabIntegrationModule::RefreshIssues() {
 void FGitlabIntegrationModule::RefreshLabels() {
     UE_LOG(LogGitlabIntegration, Verbose, TEXT("Label callback triggered"));
 
+    LabelList.Empty();
     for (auto &Label: Api->GetLabels()) {
         LabelList.Add(Label);
     }
 
-    if (LabelTileView.IsValid()) {
-        LabelTileView->RequestListRefresh();
+
+    if (LabelWrapBox.IsValid()) {
+        LabelWrapBox->ClearChildren();
+        for (auto &Label: LabelList) {
+
+            LabelWrapBox->AddSlot()
+            [
+                    GenerateLabelWidget(Label)
+            ];
+        }
     }
 
 }
