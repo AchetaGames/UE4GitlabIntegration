@@ -494,7 +494,6 @@ FGitlabIntegrationModule::GenerateLabelWidget(TSharedPtr<FGitlabIntegrationIAPIL
                                        return SelectedLabels.Contains(LabelInfo->name) || OnIssue ? FColor::FromHex(
                                            LabelInfo->text_color) : FLinearColor::Black;
                                    })
-                                   .ForegroundColor(FColor::FromHex(LabelInfo->text_color))
                                    .ToolTipText(FText::FromString(LabelInfo->description))
                                    .ButtonColorAndOpacity_Lambda([this, LabelInfo, OnIssue]() -> FLinearColor {
                                        return SelectedLabels.Contains(LabelInfo->name) || OnIssue ? FColor::FromHex(
