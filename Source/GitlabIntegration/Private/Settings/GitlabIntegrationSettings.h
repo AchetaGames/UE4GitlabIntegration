@@ -33,4 +33,10 @@ public:
      */
     UPROPERTY(config, EditAnywhere)
     FString Project = TEXT("");
+
+    /**
+     * Sort Issues newest first
+     */
+    UPROPERTY(config, EditAnywhere)
+    bool SortIssuesNewestFirst = true;
 };

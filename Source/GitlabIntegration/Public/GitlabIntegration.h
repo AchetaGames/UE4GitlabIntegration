@@ -43,12 +43,13 @@ private:
 
     TSharedRef<ITableRow> GenerateIssueWidget(TSharedPtr<FGitlabIntegrationIAPIIssue> IssueInfo, const TSharedRef<STableViewBase>& OwnerTable);
 
-    TSharedRef<SHorizontalBox> GenerateLabelWidget(TSharedPtr<FGitlabIntegrationIAPILabel> LabelInfo);
+    TSharedRef<SHorizontalBox> GenerateLabelWidget(TSharedPtr<FGitlabIntegrationIAPILabel> LabelInfo, bool OnIssue);
 
     IAPI* Api;
 
     FTimerHandle IssueTracking;
     FString IssueSearch;
+    bool IssueSortNewFirst;
 
 private:
 	TSharedPtr<class FUICommandList> PluginCommands;
@@ -70,6 +71,6 @@ private:
 
     TArray<TSharedPtr<FGitlabIntegrationIAPILabel>> LabelList;
     TSharedPtr<SWrapBox> LabelWrapBox;
-    TArray<TSharedRef<SWrapBox::FSlot>> LabelWrapSlots;
+    TArray<FString> SelectedLabels;
 
 };
