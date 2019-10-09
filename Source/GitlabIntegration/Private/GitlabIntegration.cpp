@@ -380,7 +380,7 @@ TSharedRef<ITableRow> FGitlabIntegrationModule::GenerateIssueWidget(TSharedPtr<F
                                            SNew(SHyperlink)
                                                .Text(FText::FromString(TEXT("#") +
                                                                        FString::FromInt(
-                                                                           IssueInfo->id)))
+                                                                           IssueInfo->iid)))
                                                .OnNavigate_Lambda([IssueInfo]() {
                                                    FPlatformProcess::LaunchURL(
                                                        *IssueInfo->web_url,
