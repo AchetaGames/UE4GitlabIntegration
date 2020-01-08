@@ -12,13 +12,13 @@ GitlabAPI::GitlabAPI(): IAPI() {
 GitlabAPI::~GitlabAPI() {
 }
 
-void GitlabAPI::SetBaseUrl(FString server) {
+void GitlabAPI::SetBaseUrl(FText server) {
     Projects.Empty();
-    ApiBaseUrl = server + TEXT("/api/v4/");
-    UE_LOG(LogGitlabIntegrationAPI, Warning, TEXT("Changing Gitlab API BaseURL to: %s"), *ApiBaseUrl);
+    ApiBaseUrl = FText::FromString(server.ToString() + TEXT("/api/v4/"));
+    UE_LOG(LogGitlabIntegrationAPI, Warning, TEXT("Changing Gitlab API BaseURL to: %s"), *ApiBaseUrl.ToString());
 }
 
-GitlabAPI::GitlabAPI(FString base, FString token, FString LoadProject, std::function<void()> IssueCallback, std::function<void()> LabelCallback): IAPI() {
+GitlabAPI::GitlabAPI(FText base, FText token, FText LoadProject, std::function<void()> IssueCallback, std::function<void()> LabelCallback): IAPI() {
     UE_LOG(LogGitlabIntegrationAPI, Log, TEXT("Creating Gitlab API"));
     SetBaseUrl(base);
     ApiToken = token;

@@ -20,19 +20,19 @@ public:
      * The url of the Gitlab instance.
      */
     UPROPERTY(config, EditAnywhere)
-    FString Server = TEXT("https://gitlab.com");
+    FText Server = FText::GetEmpty();
 
     /**
      * The token to access the Gitlab instance.
      */
     UPROPERTY(config, EditAnywhere)
-    FString Token;
+    FText Token = FText::GetEmpty();
 
     /**
      * Selected project
      */
     UPROPERTY(config, EditAnywhere)
-    FString Project = TEXT("");
+    FText Project = FText::GetEmpty();
 
     /**
      * Sort Issues newest first

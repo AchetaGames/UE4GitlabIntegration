@@ -7,9 +7,9 @@
 #include "Runtime/Online/HTTP/Public/Http.h"
 #include "Json.h"
 #include "JsonUtilities.h"
+#include "Internationalization/Text.h"
 #include <functional>
 #include "IAPI.generated.h"
-
 
 /**
  * 
@@ -84,10 +84,10 @@ public:
     IAPI();
 	virtual ~IAPI();
 
-    IAPI(FString base, FString token, FString LoadProject, std::function<void()> IssueCallback, std::function<void()> LabelCallback);
-	virtual void SetBaseUrl(FString base);
-    void SetToken(FString token);
-    void SetLoadProject(FString project);
+    IAPI(FText base, FText token, FText LoadProject, std::function<void()> IssueCallback, std::function<void()> LabelCallback);
+	virtual void SetBaseUrl(FText base);
+    void SetToken(FText token);
+    void SetLoadProject(FText project);
     void SetIssueCallback(std::function<void()> callback);
     void SetLabelCallback(std::function<void()> callback);
     void SetProject(FGitlabIntegrationIAPIProject project);
@@ -103,9 +103,9 @@ public:
     void GetJsonStringFromStruct(StructType FilledStruct, FString& StringOutput);
     template <typename StructType>
     void GetStructFromJsonString(FHttpResponsePtr Response, StructType& StructOutput);
-    FString ApiBaseUrl = TEXT("");
-    FString ApiToken = TEXT("");
-    FString InitialProjectName = TEXT("");
+    FText ApiBaseUrl = FText::GetEmpty();
+    FText ApiToken = FText::GetEmpty();
+    FText InitialProjectName = FText::GetEmpty();
     std::function<void()> IssueCallback;
     std::function<void()> LabelCallback;
 

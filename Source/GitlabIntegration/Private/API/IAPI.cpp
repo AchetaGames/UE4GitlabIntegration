@@ -13,17 +13,17 @@ IAPI::IAPI() {
 IAPI::~IAPI() {
 }
 
-void IAPI::SetBaseUrl(FString server) {
+void IAPI::SetBaseUrl(FText server) {
     Projects.Empty();
     ApiBaseUrl = server;
-    UE_LOG(LogGitlabIntegrationIAPI, Warning, TEXT("Changing Generic API BaseURL to: %s"), *ApiBaseUrl);
+    UE_LOG(LogGitlabIntegrationIAPI, Warning, TEXT("Changing Generic API BaseURL to: %s"), *ApiBaseUrl.ToString());
 }
 
-void IAPI::SetToken(FString token) {
+void IAPI::SetToken(FText token) {
     ApiToken = token;
 }
 
-void IAPI::SetLoadProject(FString project) {
+void IAPI::SetLoadProject(FText project) {
     InitialProjectName = project;
 }
 
@@ -32,14 +32,14 @@ void IAPI::SetRequestHeaders(TSharedRef<IHttpRequest> &Request) {
     Request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
     Request->SetHeader(TEXT("Accepts"), TEXT("application/json"));
     if (!ApiToken.IsEmpty()) {
-        Request->SetHeader(TEXT("Authorization"), TEXT("Bearer ") + ApiToken);
+        Request->SetHeader(TEXT("Authorization"), TEXT("Bearer ") + ApiToken.ToString());
     }
 }
 
 TSharedRef<IHttpRequest> IAPI::RequestWithRoute(FString Subroute) {
     TSharedRef<IHttpRequest> Request = Http->CreateRequest();
-    UE_LOG(LogGitlabIntegrationIAPI, Warning, TEXT("Sending request to: %s/%s"), *ApiBaseUrl, *Subroute);
-    Request->SetURL(ApiBaseUrl + TEXT("/") + Subroute);
+    UE_LOG(LogGitlabIntegrationIAPI, Warning, TEXT("Sending request to: %s/%s"), *ApiBaseUrl.ToString(), *Subroute);
+    Request->SetURL(ApiBaseUrl.ToString() + TEXT("/") + Subroute);
     SetRequestHeaders(Request);
     return Request;
 }
@@ -104,7 +104,7 @@ void IAPI::ProjectsResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, 
         if (!Projects.Contains(Project.id)) {
             Projects.Emplace(Project.id, Project);
             if (SelectedProject.id == -1) {
-                if (Project.name_with_namespace == InitialProjectName) {
+                if (Project.name_with_namespace == InitialProjectName.ToString()) {
                     UE_LOG(LogGitlabIntegrationIAPI, Log, TEXT("Found selected project"))
                     SetProject(Project);
                 }
@@ -245,7 +245,7 @@ void IAPI::SetLabelCallback(std::function<void()> callback) {
     LabelCallback = callback;
 }
 
-IAPI::IAPI(FString base, FString token, FString LoadProject, std::function<void()> IssueCallback, std::function<void()> LabelCallback) {
+IAPI::IAPI(FText base, FText token, FText LoadProject, std::function<void()> IssueCallback, std::function<void()> LabelCallback) {
     UE_LOG(LogGitlabIntegrationIAPI, Log, TEXT("Creating Gitlab API"));
     Http = &FHttpModule::Get();
     SetBaseUrl(base);

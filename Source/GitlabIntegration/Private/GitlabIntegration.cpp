@@ -116,6 +116,9 @@ void FGitlabIntegrationModule::ShutdownModule() {
 
 TSharedRef<SDockTab> FGitlabIntegrationModule::OnSpawnPluginTab(const FSpawnTabArgs &SpawnTabArgs) {
     UGitlabIntegrationSettings *Settings = GetMutableDefault<UGitlabIntegrationSettings>();
+    if (Api == nullptr) {
+        StartupModule();
+    }
     if (Settings != nullptr) {
         return SNew(SDockTab)
                    .TabRole(ETabRole::NomadTab)
@@ -531,7 +534,7 @@ TSharedRef<STextBlock> FGitlabIntegrationModule::CreateProjectSelectionButtonTex
     const UGitlabIntegrationSettings *Settings = GetDefault<UGitlabIntegrationSettings>();
     ProjectSelectionButtonText = SNew(STextBlock)
         .Text((Settings->Project.IsEmpty() ? LOCTEXT("GitlabIntegrationProjectSelection", "Select Project")
-                                           : FText::FromString(*Settings->Project)));
+                                           : Settings->Project));
     return ProjectSelectionButtonText.ToSharedRef();
 }
 
@@ -554,9 +557,9 @@ TSharedRef<SWidget> FGitlabIntegrationModule::GenerateProjectList() {
 void FGitlabIntegrationModule::HandleProjectSelection(FGitlabIntegrationIAPIProject project) {
     UGitlabIntegrationSettings *Settings = GetMutableDefault<UGitlabIntegrationSettings>();
     if (Settings != nullptr) {
-        if (Settings->Project != project.name_with_namespace) {
+        if (Settings->Project.ToString() != project.name_with_namespace) {
             UE_LOG(LogGitlabIntegration, Log, TEXT("Selected project %s"), *project.name_with_namespace);
-            Settings->Project = project.name_with_namespace;
+            Settings->Project = FText::FromString(project.name_with_namespace);
             Settings->SaveConfig();
             Api->SetProject(project);
             if (project.id != -1) {

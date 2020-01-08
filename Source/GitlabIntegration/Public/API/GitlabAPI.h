@@ -23,8 +23,7 @@ public:
 	GitlabAPI();
 	~GitlabAPI();
 
-    GitlabAPI(FString base, FString token, FString LoadProject, std::function<void()> IssueCallback,
-              std::function<void()> LabelCallback);
+    GitlabAPI(FText base, FText token, FText LoadProject, std::function<void()> IssueCallback, std::function<void()> LabelCallback);
 
-    void SetBaseUrl(FString server);
+    void SetBaseUrl(FText server);
 };
