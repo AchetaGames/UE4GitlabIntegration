@@ -25,5 +25,6 @@ GitlabAPI::GitlabAPI(FText base, FText token, FText LoadProject, std::function<v
     InitialProjectName = LoadProject;
     SetIssueCallback(IssueCallback);
     SetLabelCallback(LabelCallback);
+    SetLoadProject(LoadProject);
     GetProjectsRequest(1);
 }

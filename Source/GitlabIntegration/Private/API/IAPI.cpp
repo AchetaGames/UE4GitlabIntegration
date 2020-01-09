@@ -210,6 +210,7 @@ void IAPI::ProjectLabelsResponse(FHttpRequestPtr Request, FHttpResponsePtr Respo
 
     for (auto &Label : LocalLabels) {
         if (!Labels.Contains(Label.id)) {
+
             TSharedPtr<FGitlabIntegrationIAPILabel> TempLabel= MakeShareable(new FGitlabIntegrationIAPILabel(Label));
             Labels.Emplace(Label.id, TempLabel);
             StringLabels.Emplace(Label.name, TempLabel);
@@ -279,8 +280,12 @@ void IAPI::RecordTimeSpent(TSharedPtr <FGitlabIntegrationIAPIIssue> issue, int t
     Send(Request);
 }
 
-TSharedPtr<FGitlabIntegrationIAPILabel> IAPI::GetLabel(FString &name) {
-    return *(StringLabels.Find(name));
+TSharedPtr <FGitlabIntegrationIAPILabel> IAPI::GetLabel(FString &name) {
+    if (StringLabels.Contains(name)) {
+        return *(StringLabels.Find(name));
+    } else {
+        return MakeShareable(new FGitlabIntegrationIAPILabel());
+    }
 }
 
 void IAPI::TimeSpentResponse(FHttpRequestPtr Request, FHttpResponsePtr Response, bool bWasSuccessful) {

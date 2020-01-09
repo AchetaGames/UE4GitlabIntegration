@@ -350,8 +350,11 @@ TSharedRef<ITableRow> FGitlabIntegrationModule::GenerateIssueWidget(TSharedPtr<F
 
     TSharedRef<SWrapBox> IssueLabels = SNew(SWrapBox).UseAllottedWidth(true);
     for (auto &label: IssueInfo->labels) {
+        UE_LOG(LogGitlabIntegration, Log, TEXT("Processing label %s"), *label);
+        auto l = Api->GetLabel(label);
+        UE_LOG(LogGitlabIntegration, Log, TEXT("Processing label %s"), *l->name);
         IssueLabels->AddSlot()[
-            GenerateLabelWidget(Api->GetLabel(label), true)
+            GenerateLabelWidget(l, true)
         ];
     }
     TSharedPtr<SBorder> TimeBorder = SNew(SBorder)
