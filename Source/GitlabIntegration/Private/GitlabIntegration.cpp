@@ -25,7 +25,7 @@
 #include "ISettingsSection.h"
 #include "ISettingsContainer.h"
 #include "Settings/GitlabIntegrationSettings.h"
-#include "GitlabAPI.h"
+#include "../Public/API/GitlabAPI.h"
 
 static const FName GitlabIntegrationTabName("Gitlab");
 

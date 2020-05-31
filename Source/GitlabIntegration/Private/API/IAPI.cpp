@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "IAPI.h"
+#include "../../Public/API/IAPI.h"
 
 DEFINE_LOG_CATEGORY(LogGitlabIntegrationIAPI);
 
