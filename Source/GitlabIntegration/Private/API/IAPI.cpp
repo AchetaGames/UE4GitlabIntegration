@@ -27,7 +27,7 @@ void IAPI::SetLoadProject(FText project) {
     InitialProjectName = project;
 }
 
-void IAPI::SetRequestHeaders(TSharedRef<IHttpRequest> &Request) {
+void IAPI::SetRequestHeaders(TSharedRef<IHttpRequest, ESPMode::ThreadSafe> &Request) {
     Request->SetHeader(TEXT("User-Agent"), TEXT("X-UnrealEngine-Agent"));
     Request->SetHeader(TEXT("Content-Type"), TEXT("application/json"));
     Request->SetHeader(TEXT("Accepts"), TEXT("application/json"));
@@ -36,33 +36,33 @@ void IAPI::SetRequestHeaders(TSharedRef<IHttpRequest> &Request) {
     }
 }
 
-TSharedRef<IHttpRequest> IAPI::RequestWithRoute(FString Subroute) {
-    TSharedRef<IHttpRequest> Request = Http->CreateRequest();
+TSharedRef<IHttpRequest, ESPMode::ThreadSafe> IAPI::RequestWithRoute(FString Subroute) {
+    TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = Http->CreateRequest();
     UE_LOG(LogGitlabIntegrationIAPI, Warning, TEXT("Sending request to: %s/%s"), *ApiBaseUrl.ToString(), *Subroute);
     Request->SetURL(ApiBaseUrl.ToString() + TEXT("/") + Subroute);
     SetRequestHeaders(Request);
     return Request;
 }
 
-TSharedRef<IHttpRequest> IAPI::GetRequest(FString Subroute, int32 page) {
+TSharedRef<IHttpRequest, ESPMode::ThreadSafe> IAPI::GetRequest(FString Subroute, int32 page) {
     if (page > 1) {
         FString separator = TEXT("?");
         if (Subroute.Contains(TEXT("?"), ESearchCase::CaseSensitive, ESearchDir::FromEnd)) { separator = TEXT("&"); }
         Subroute += separator + TEXT("page=") + FString::FromInt(page);
     }
-    TSharedRef<IHttpRequest> Request = RequestWithRoute(Subroute);
+    TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = RequestWithRoute(Subroute);
     Request->SetVerb("GET");
     return Request;
 }
 
-TSharedRef<IHttpRequest> IAPI::PostRequest(FString Subroute, FString ContentJsonString) {
-    TSharedRef<IHttpRequest> Request = RequestWithRoute(Subroute);
+TSharedRef<IHttpRequest, ESPMode::ThreadSafe> IAPI::PostRequest(FString Subroute, FString ContentJsonString) {
+    TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = RequestWithRoute(Subroute);
     Request->SetVerb("POST");
     Request->SetContentAsString(ContentJsonString);
     return Request;
 }
 
-void IAPI::Send(TSharedRef<IHttpRequest> &Request) {
+void IAPI::Send(TSharedRef<IHttpRequest, ESPMode::ThreadSafe> &Request) {
     Request->ProcessRequest();
 }
 
@@ -89,7 +89,7 @@ void IAPI::GetStructFromJsonString(FHttpResponsePtr Response, StructType &Struct
 }
 
 void IAPI::GetProjectsRequest(int32 page) {
-    TSharedRef<IHttpRequest> Request = GetRequest("projects", page);
+    TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = GetRequest("projects", page);
     Request->OnProcessRequestComplete().BindRaw(this, &IAPI::ProjectsResponse);
     Send(Request);
 }
@@ -151,13 +151,13 @@ void IAPI::SetProject(FGitlabIntegrationIAPIProject project) {
 }
 
 void IAPI::GetProjectLabels(int project_id, int32 page) {
-    TSharedRef<IHttpRequest> Request = GetRequest("projects/" + FString::FromInt(project_id) + "/labels", page);
+    TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = GetRequest("projects/" + FString::FromInt(project_id) + "/labels", page);
     Request->OnProcessRequestComplete().BindRaw(this, &IAPI::ProjectLabelsResponse);
     Send(Request);
 }
 
 void IAPI::GetProjectIssuesRequest(int project_id, int32 page) {
-    TSharedRef<IHttpRequest> Request = GetRequest("projects/" + FString::FromInt(project_id) + "/issues?state=opened", page);
+    TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = GetRequest("projects/" + FString::FromInt(project_id) + "/issues?state=opened", page);
     Request->OnProcessRequestComplete().BindRaw(this, &IAPI::ProjectIssuesResponse);
     Send(Request);
 }
@@ -273,7 +273,7 @@ void IAPI::RefreshIssues() {
 }
 
 void IAPI::RecordTimeSpent(TSharedPtr <FGitlabIntegrationIAPIIssue> issue, int time) {
-    TSharedRef<IHttpRequest> Request = PostRequest(
+    TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Request = PostRequest(
         FString::Printf(TEXT("projects/%d/issues/%d/add_spent_time?duration=%ds"), issue->project_id, issue->iid, time),
         TEXT(""));
     Request->OnProcessRequestComplete().BindRaw(this, &IAPI::ProjectsResponse);

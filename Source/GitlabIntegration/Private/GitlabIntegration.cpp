@@ -580,7 +580,7 @@ void FGitlabIntegrationModule::HandleProjectSelection(FGitlabIntegrationIAPIProj
 }
 
 void FGitlabIntegrationModule::PluginButtonClicked() {
-    FGlobalTabmanager::Get()->InvokeTab(GitlabIntegrationTabName);
+    FGlobalTabmanager::Get()->TryInvokeTab(GitlabIntegrationTabName);
 }
 
 void FGitlabIntegrationModule::AddMenuExtension(FMenuBuilder &Builder) {

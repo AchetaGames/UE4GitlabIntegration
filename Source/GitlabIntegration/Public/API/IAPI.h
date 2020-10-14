@@ -94,10 +94,10 @@ public:
     FGitlabIntegrationIAPIProject GetProject();
 
 
-    TSharedRef<IHttpRequest> RequestWithRoute(FString Subroute);
-    TSharedRef<IHttpRequest> GetRequest(FString Subroute, int32 page);
-    TSharedRef<IHttpRequest> PostRequest(FString Subroute, FString ContentJsonString);
-    void Send(TSharedRef<IHttpRequest>& Request);
+    TSharedRef<IHttpRequest, ESPMode::ThreadSafe> RequestWithRoute(FString Subroute);
+    TSharedRef<IHttpRequest, ESPMode::ThreadSafe> GetRequest(FString Subroute, int32 page);
+    TSharedRef<IHttpRequest, ESPMode::ThreadSafe> PostRequest(FString Subroute, FString ContentJsonString);
+    void Send(TSharedRef<IHttpRequest, ESPMode::ThreadSafe>& Request);
     bool ResponseIsValid(FHttpResponsePtr Response, bool bWasSuccessful);
     template <typename StructType>
     void GetJsonStringFromStruct(StructType FilledStruct, FString& StringOutput);
@@ -116,7 +116,7 @@ public:
     TMap<int32, TSharedPtr<FGitlabIntegrationIAPILabel>> Labels;
     TMap<FString, TSharedPtr<FGitlabIntegrationIAPILabel>> StringLabels;
 
-    void SetRequestHeaders(TSharedRef<IHttpRequest>& Request);
+    void SetRequestHeaders(TSharedRef<IHttpRequest, ESPMode::ThreadSafe>& Request);
 
 private:
     FHttpModule* Http;
